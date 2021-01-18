@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, Upload, message} from 'antd';
+import { Modal, Button, Upload, message, Progress} from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import {Icon} from '@befe/brick-comp-icon';
 import {
@@ -40,6 +40,8 @@ const App = () => {
 
     const showModal = () => {
         setIsModalVisible(true);
+        setPredictResult([]);
+        setFileList([]);
     };
 
     const handleOk = () => {
@@ -51,12 +53,13 @@ const App = () => {
     };
 
     const onChange = async ({ fileList: newFileList }) => {
-        await setFileList(newFileList)
+        await setFileList(newFileList.slice(-1))  // 只是获取最后一个图片
 
+        let predictedImg = newFileList.slice(-1);
 
-        if (newFileList && newFileList.length > 0) {
+        if (predictedImg && predictedImg.length > 0) {
 
-            const file = newFileList[0];
+            const file = predictedImg[0];
 
             let src = file.url;
             if (!src) {
@@ -72,12 +75,6 @@ const App = () => {
             image.height = 224;
 
             const predictResultTemp = await predict(image);
-            console.log('predict result', predictResultTemp)
-            // const predictResult = [
-            //     {className: SvgUserPlus, score: 0.640287697},
-            //     {className: SvgMagnifierMinus, score: 0.30},
-            //     {className: SvgUserTeam, score: 0.028}
-            // ]
 
             setPredictResult(predictResultTemp)
         }
@@ -101,6 +98,7 @@ const App = () => {
     const props = {
         name: 'file',
         listType: "picture",
+        fileList: fileList,
         // multiple: true,
         action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
         defaultFileList: [...fileList],
@@ -129,8 +127,10 @@ const App = () => {
                     {
                         predictResult.map(item => {
                             return <div className={'result-item-wrapper'}>
-                                <Icon svg={iconMap[item.className]} />
-                                <p>{`score为${(item.score * 100).toFixed(0)} 类型为 ${item.className}`}</p>
+                                <Icon svg={iconMap[item.className]} style={{fontSize: 30, color: '#666', marginRight: '16px'}}/>
+
+                                <Progress percent={(item.score * 100).toFixed(0)} />
+                                <p className={'percent'}>{item.className}</p>
                             </div>
                         })
                     }
